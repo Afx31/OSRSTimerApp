@@ -1,59 +1,69 @@
-import React, { useState } from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-  Button,
-  Image,
-  ImageBackground,
-} from 'react-native';
+import React, {useState} from 'react';
+import notifee from '@notifee/react-native';
+import {StyleSheet, Text, View, Button, Image} from 'react-native';
 
-const TimerCard = (props) => {
+const TimerCard = props => {
   const {name, timer} = props;
   const [timerToDisplay, setTimerToDisplay] = useState('');
-
   // Get current time in milliseconds (minus 1hr for correct time for some dumb reason)
-  const time = new Date().getTime() - (60 * 60000);
+  const time = new Date().getTime() - 60 * 60000;
 
+  async function onDisplayNotification() {
+    // Request permissions (required for iOS)
+    //await notifee.requestPermission()
 
-  const handleSetTimer = (timer) => {
+    // Create a channel (required for Android)
+    const channelId = await notifee.createChannel({
+      id: 'default',
+      name: 'Default Channel',
+    });
+
+    // Display a notification
+    await notifee.displayNotification({
+      title: 'OSRS Timer App',
+      body: `${name} run is completed!`,
+      android: {
+        channelId,
+        smallIcon: 'ic_launcher', // optional, defaults to 'ic_launcher'.
+        // pressAction is needed if you want the notification to open the app when pressed
+        pressAction: {
+          id: 'default',
+        },
+      },
+    });
+  }
+
+  const handleSetTimer = () => {
     var countDown = timer * 60000;
-    var taskCompletedAt = new Date(time + countDown)
+    var taskCompletedAt = new Date(time + countDown);
 
-    setTimerToDisplay(taskCompletedAt.toLocaleTimeString())
+    setTimerToDisplay(taskCompletedAt.toLocaleTimeString());
 
     // This is for the notication push
     // Should clear the timer after this too maybe?
     setTimeout(() => {
-      
-    }, 5000);
-  }
+      onDisplayNotification();
+    }, countDown);
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.leftContainer}>
         <Text>{name}</Text>
-        {name === 'Herb' ?
+        {name === 'Herb' ? (
           <Image
             style={styles.img}
             source={require('../img/ranarr-weed.png')}
           />
-        :
+        ) : (
           <Image
             style={styles.img}
             source={require('../img/redwood-bird-house.png')}
           />
-        }
+        )}
       </View>
       <View style={styles.middleContainer}>
-      <Button
-        title='Set'
-        onPress={() => handleSetTimer(timer)}
-      />
+        <Button title="Set" onPress={() => handleSetTimer()} />
       </View>
       <View style={styles.rightContainer}>
         <Text style={styles.timerText}>{timerToDisplay}</Text>
@@ -79,16 +89,16 @@ const styles = StyleSheet.create({
   },
   leftContainer: {
     // borderWidth: 1,
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   middleContainer: {
     // borderWidth: 1,
     justifyContent: 'center',
-    width: '30%'
+    width: '30%',
   },
   rightContainer: {
     // borderWidth: 1,
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   img: {
     width: 50,
@@ -96,7 +106,7 @@ const styles = StyleSheet.create({
   },
   timerText: {
     fontSize: 25,
-  }
+  },
 });
 
 export default TimerCard;
